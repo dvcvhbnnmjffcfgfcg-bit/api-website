@@ -1,0 +1,79 @@
+// Prisma schema for the API platform (PostgreSQL 16).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  BANNED
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  passwordHash  String
+  githubId      String?     @unique
+  githubAvatar  String?
+  plan          Plan        @default(FREE)
+  role          Role        @default(USER)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  apiKeys       ApiKey[]
+  usage         ApiUsage[]
+  subscriptions Subscription[]
+
+  @@index([plan])
+  @@index([role])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  keyHash    String    @unique
+  userId     String
+  name       String    @default("default")
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ApiUsage {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String
+  statusCode Int
+  latencyMs  Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([endpoint, createdAt])
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  userId           String
+  plan             Plan
+  stripeCustomerId String?
+  stripeSubId      String?
+  status           String   @default("active") // active | canceled | past_due
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}

@@ -1,0 +1,24 @@
+{
+  "name": "api-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Commercial-grade RESTful API service platform: official website + API gateway + business services + admin",
+  "scripts": {
+    "build": "pnpm -r --filter '!@api-website/web' build && pnpm --filter @api-website/web build",
+    "prisma:generate": "pnpm --filter @api-website/db exec prisma generate",
+    "db:migrate": "bash -c 'set -a && source .env && set +a && pnpm --filter @api-website/db exec prisma migrate deploy'",
+    "db:seed": "bash -c 'set -a && source .env && set +a && pnpm --filter @api-website/db exec prisma db seed'",
+    "db:setup": "pnpm prisma:generate && pnpm db:migrate && pnpm db:seed",
+    "start": "concurrently -k \"pnpm --filter @api-website/api-service start\" \"pnpm --filter @api-website/api-gateway start\" \"pnpm --filter @api-website/web start\"",
+    "dev": "concurrently -k \"pnpm --filter @api-website/api-service dev\" \"pnpm --filter @api-website/api-gateway dev\" \"pnpm --filter @api-website/web dev\"",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
